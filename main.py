@@ -5,11 +5,11 @@ class Game:
     run: bool = True
     players = {}
     message = ''
-    player = ''
     range = tuple(
         j for i in range(1, 8) for j in range(i * 9 + 1, i * 9 + 8)
     )
-    format = ".#HSM"
+    format = "··HSM"
+    format = "·#HSM"
 
     def __init__(self):
         self.setup()
@@ -21,6 +21,7 @@ class Game:
                 self.free.remove(i)
 
     def setup(self):
+        self.player = ''
         self.shots = []
         self.ships = []
         self.free = list(self.range)
@@ -95,39 +96,48 @@ class Game:
         print("\n    A B C D E F G")
 
     def input(self):
-        # if not self.player:
-        #     self.player = input(f"\nEnter your name.\n\n> ")
-
-        # elif not self.ships:
-
-        # if not self.message:
-        #     self.message = 'Enter coordinates (e.g. "a1" or "g7").'
-        # cmd = input(f"\n{self.message}\n\n> ")
-        # if not cmd:
-        #     return
-        # if len(cmd) == 2 and (x := cmd[0].upper()) in "ABCDEFG" and (y := cmd[1]) in "1234567":
-        #     pos = int(y) * 9 + "ABCDEFG".index(x) + 1
-        #     if pos in self.shots:
-        #         self.message = f"{cmd} is already checked. Enter another coordinates."
-        #     else:
-        #         self.shots.append(pos)
-        #         if self.map[pos]:
-        #             self.map[pos] = 2
-        #             for i in self.ships:
-        #                 if pos in i:
-        #                     if 1 not in (self.map[j] for j in i):
-        #                         for j in i:
-        #                             self.map[j] = 3
-        #                         self.ships.remove(i)
-        #                     break
-        #         else:
-        #             self.map[pos] = 4
-
-        # else:
-        #     score = len(self.shots)
-        #     message = f"Your score: {score}. Another game?"
-        #     self.players[self.player] = score
-        pass
+        if not self.player:
+            self.player = input(f"\nEnter your name.\n\n> ")
+        elif not self.ships:
+            score = len(self.shots)
+            if score > self.players.get(self.player, 0):
+                self.players[self.player] = score
+            cmd = input(f"\nYour score: {score}. Another game? (Y/n)\n\n> ").lower()
+            if cmd == "y" or cmd == "yes":
+                self.setup()
+            else:
+                self.run = False
+                players = sorted(self.players.items(), key=lambda i: i[1])
+                print("#   Name     Score")
+                for i, (name, score) in enumerate(players):
+                    i = str(i + 1)
+                    line = i + ' ' * (4 - len(i))
+                    line += name + ' ' * (9 - len(name))
+                    line += str(score)
+                    print(line)
+                    
+        else:
+            cmd = input(f'\n{self.message or 'Enter coordinates. (e.g. "a1" or "g7")'}\n\n> ')
+            if len(cmd) == 2 and (x := cmd[0].upper()) in "ABCDEFG" and (y := cmd[1]) in "1234567":
+                pos = int(y) * 9 + "ABCDEFG".index(x) + 1
+                if pos in self.shots:
+                    self.message = f"{cmd} is already checked. Enter another coordinates."
+                else:
+                    self.message = ''
+                    self.shots.append(pos)
+                    if self.map[pos]:
+                        self.map[pos] = 2
+                        for i in self.ships:
+                            if pos in i:
+                                if 1 not in (self.map[j] for j in i):
+                                    for j in i:
+                                        self.map[j] = 3
+                                    self.ships.remove(i)
+                                break
+                    else:
+                        self.map[pos] = 4
+            else:
+                self.message = ''
 
     def main(self):
         try:
