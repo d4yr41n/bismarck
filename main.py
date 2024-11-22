@@ -42,57 +42,64 @@ class Game:
             self.block(i)
             self.map[i] = 1
 
-        # t = 2
-        # s = 4
-        # while t: 
-        #     ship = None
-        #     hor = random() < .5
-        #     if hor:
-        #         start = choice([i for i in self.free if (i + 2) % 9])
-        #         if start + 1 in self.free:
-        #             ship = (start, start + 1)
-        #         else:
-        #             self.map[start] = 1
-        #             self.ships.append((start,))
-        #             self.block(start)
-        #             s -= 1
-        #     elif not ship:
-        #         start = choice(self.free[:-7])
-        #         if start + 9 in self.free:
-        #             ship = (start, start + 9)
-        #         else:
-        #             self.map[start] = 1
-        #             self.ships.append((start,))
-        #             self.block(start)
-        #             s -= 1
+        t = 2
+        s = 4
+        while t: 
+            ship = None
+            hor = random() < .5
+            if hor:
+                start = choice([i for i in self.free if (i + 2) % 9])
+                if start + 1 in self.free:
+                    ship = (start, start + 1)
+                else:
+                    self.map[start] = 1
+                    self.ships.append((start,))
+                    self.block(start)
+                    s -= 1
+            elif not ship:
+                start = choice(self.free[:-7])
+                if start + 9 in self.free:
+                    ship = (start, start + 9)
+                else:
+                    self.map[start] = 1
+                    self.ships.append((start,))
+                    self.block(start)
+                    s -= 1
 
-        #     if ship:
-        #         self.ships.append(ship)
-        #         for i in ship:
-        #             self.block(i)
-        #             self.map[i] = 1
+            if ship:
+                self.ships.append(ship)
+                for i in ship:
+                    self.block(i)
+                    self.map[i] = 1
 
-        #         t -= 1
+                t -= 1
                 
-        # for i in range(s):
-        #     if self.free:
-        #         start = choice(self.free)
-        #         self.block(start)
-        #         self.map[start] = 1
-        #         self.ships.append((start,))
-        #     else:
-        #         self.setup()
+        for i in range(s):
+            if self.free:
+                start = choice(self.free)
+                self.block(start)
+                self.map[start] = 1
+                self.ships.append((start,))
+            else:
+                self.setup()
 
     def render(self):
         print("\033[H\033[J", end='')
-        print("    A B C D E F G\n")
+        print("    A B C D E F G")
+        print(' ' * 24 + (self.player and f"Player: {self.player}"))
         for i in range(1, 8):
             start = i * 9 + 1
             end = i * 9 + 8
             print(i, end='   ')
             for j in self.map[start:end]:
                 print(self.format[j], end=' ')
-            print(f"  {i}")
+            print(f"  {i}", end='   ')
+            if self.player and i == 2:
+                print(f"Score: {len(self.shots)}")
+            elif self.player and i == 4:
+                print("M - miss, H - hit, S - sunk")
+            else:
+                print()
         print("\n    A B C D E F G")
 
     def input(self):
@@ -108,6 +115,7 @@ class Game:
             else:
                 self.run = False
                 players = sorted(self.players.items(), key=lambda i: i[1])
+                print("\033[H\033[J", end='')
                 print("#   Name     Score")
                 for i, (name, score) in enumerate(players):
                     i = str(i + 1)
@@ -115,7 +123,6 @@ class Game:
                     line += name + ' ' * (9 - len(name))
                     line += str(score)
                     print(line)
-                    
         else:
             cmd = input(f'\n{self.message or 'Enter coordinates. (e.g. "a1" or "g7")'}\n\n> ')
             if len(cmd) == 2 and (x := cmd[0].upper()) in "ABCDEFG" and (y := cmd[1]) in "1234567":
