@@ -1,12 +1,16 @@
 from random import choice, randint, random
+from time import sleep
       
 
 class Game:
     run: bool = True
     players = {}
     message = ''
-    range = tuple(
-        j for i in range(1, 8) for j in range(i * 9 + 1, i * 9 + 8)
+    range = tuple(j for i in range(1, 8) for j in range(i * 9 + 1, i * 9 + 8))
+    start = (
+        (tuple(i for i in range if (i + 3) % 9 and (i + 2) % 9), range[:-14]),
+        (tuple(i for i in range if (i + 2) % 9), range[:-7]),
+        (range, range)
     )
     format = "··HSM"
     format = "·#HSM"
@@ -15,9 +19,10 @@ class Game:
         self.setup()
 
     def block(self, pos):
+        self.map[pos] = 1
         for offset in (0, 1, 9, 10, 8, -1, -9, -10, -8):
             i = pos + offset
-            if self.map[i] == 0 and i in self.free:
+            if i in self.free:
                 self.free.remove(i)
 
     def setup(self):
@@ -29,59 +34,28 @@ class Game:
         for i in self.range:
             self.map[i] = 0
 
-        hor = random() < .5
-        if hor:
-            start = choice([i for i in self.free if (i + 3) % 9 and (i + 2) % 9])
-            ship = (start, start + 1, start + 2)
-        else:
-            start = choice(self.free[:-14])
-            ship = (start, start + 9, start + 18)
-        self.ships.append(ship)
-
-        for i in ship:
-            self.block(i)
-            self.map[i] = 1
-
-        t = 2
-        s = 4
-        while t: 
-            ship = None
-            hor = random() < .5
-            if hor:
-                start = choice([i for i in self.free if (i + 2) % 9])
-                if start + 1 in self.free:
-                    ship = (start, start + 1)
-                else:
-                    self.map[start] = 1
-                    self.ships.append((start,))
-                    self.block(start)
-                    s -= 1
-            elif not ship:
-                start = choice(self.free[:-7])
-                if start + 9 in self.free:
-                    ship = (start, start + 9)
-                else:
-                    self.map[start] = 1
-                    self.ships.append((start,))
-                    self.block(start)
-                    s -= 1
-
-            if ship:
-                self.ships.append(ship)
-                for i in ship:
-                    self.block(i)
-                    self.map[i] = 1
-
-                t -= 1
+        for i, count, size in ((0, 1, 3), (1, 2, 2), (2, 4, 1)):
+            while count:                              
+                if not self.free:
+                    self.setup()
+                    return
                 
-        for i in range(s):
-            if self.free:
-                start = choice(self.free)
-                self.block(start)
-                self.map[start] = 1
-                self.ships.append((start,))
-            else:
-                self.setup()
+                dir = random() < .5
+                start = choice(tuple(j for j in self.start[i][dir] if j in self.free))
+                if dir:
+                    ship = tuple(start + j for j in range(size))
+                else:
+                    ship = tuple(start + j * 9 for j in range(size))
+
+                if not all((j in self.free for j in ship)):
+                    continue
+
+                self.ships.append(ship)
+                count -= 1
+
+                for j in ship:
+                    self.block(j)
+
 
     def render(self):
         print("\033[H\033[J", end='')
